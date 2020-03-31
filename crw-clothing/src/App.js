@@ -5,7 +5,7 @@ import { Switch, Route} from 'react-router-dom';
 import ShopPage from './pages/shop/shop.component';
 import Header from  './components/header/header.component';
 import SignInAndUpPage from './pages/sign-in&up/sign-in&up.component';
-import { auth } from './firebase/firebase.util';
+import { auth, createUserProfileDocument } from './firebase/firebase.util';
 
 class App extends React.Component {
 constructor() {
@@ -19,10 +19,27 @@ constructor() {
   unsubcribeFromAuth = null
 
  componentDidMount() { //es un extension de firebase permite ver si estas login
-  this.unsubcribeFromAuth =  auth.onAuthStateChanged(user => {
-     this.setState({currentUser: user});
+  this.unsubcribeFromAuth =  auth.onAuthStateChanged(async userAuth => {
+     if(userAuth) {
+       const userRef = await createUserProfileDocument(userAuth);
 
-     console.log(user);
+       userRef.onSnapshot(snapShot => {
+         console.log(snapShot.data());
+         this.setState({
+           currentUser: {
+             id: snapShot.id,
+             ...snapShot.data()
+           }
+         }, () => {
+           console.log(this.state);
+         })
+       });
+       console.log(this.state);
+     } else {
+       this.setState({ currentUser: userAuth})
+     }
+
+      
    })
  }
 
